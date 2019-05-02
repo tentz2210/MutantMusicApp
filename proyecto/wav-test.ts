@@ -11,6 +11,7 @@ import * as WavEncoder from 'wav-encoder';
 // import { default as ft } from 'fourier-transform';
 import * as WavDecoder from 'wav-decoder';
 import { SongStructure } from './SongStructure';
+import { MutantMusic } from './MutantMusicApp';
 
 
 async function readWav(filepathS1: string, filepathS2: string){
@@ -33,13 +34,20 @@ const readFile = (filepath: string) => {
   });
 };
 
-const filepathS1 = "C:\\Users\\tentz\\Desktop\\proyecto\\smalltest.wav";
-const filepathS2 = "C:\\Users\\tentz\\Desktop\\proyecto\\smalltest2.wav";
+const filepathS1 = "C:\\Users\\tentz\\Desktop\\proyecto\\Lavender Buds.wav";
+const filepathS2 = "C:\\Users\\tentz\\Desktop\\proyecto\\Lavender Buds_short.wav";
 
 
 readWav(filepathS1, filepathS2).then((audioDataArray) => {
-  const s1 = new SongStructure(audioDataArray[0]);
-  const s2 = new SongStructure(audioDataArray[1]);
+  const s1 = new SongStructure(audioDataArray[0], 402, 1000);
+  const s2 = new SongStructure(audioDataArray[1], 400, 1000);
+
+  const test = new MutantMusic(audioDataArray[0], audioDataArray[1]);
+
+  test.matchOperation();
+
+  console.log(s1.calculateDistribution());
+
 });
 
 
@@ -60,7 +68,7 @@ const audioData2 = readFile("C:\\Users\\tentz\\Desktop\\proyecto\\smalltest2.wav
 s2 = new SongStructure(audioData2);
 */
 
-
+/*
 
 readFile("C:\\Users\\tentz\\Desktop\\proyecto\\smalltestfor3.wav").then((buffer) => {
   return WavDecoder.decode(buffer);
@@ -89,7 +97,7 @@ readFile("C:\\Users\\tentz\\Desktop\\proyecto\\smalltestfor3.wav").then((buffer)
   }
 */
 
-  
+  /*
   
   console.log("wav test" +audioData.channelData[0].length);
   const testSong = new SongStructure(audioData);
@@ -100,17 +108,7 @@ readFile("C:\\Users\\tentz\\Desktop\\proyecto\\smalltestfor3.wav").then((buffer)
 
 });
 
-
-
-var contador = 0;
-
-
-/*
-for(let i = 0; i < 200; i++){
-  if(s1.songStruct[0][i] == s2.songStruct[0][i]){
-    contador++;
-  }
-}
-
-console.log(contador/200);
 */
+
+
+

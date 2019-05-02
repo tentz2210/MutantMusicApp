@@ -10,68 +10,62 @@ export class SongStructure{
     private audioData: any;
     private unifiedChannel: number[];
     public songStruct: number[][]; //contiene el tipo de estructura y el indice donde comienza
-    public dominantStruct: number;
 
     //indices de SongStruct
-    public rises: number[]; //contiene los indices donde hay subidas
-    public falls: number[]; //contiene los indices donde hay bajadas
-    public plateaus: number[]; //contiene los indices donde hay mesetas
-    public valleys: number[]; //contiene los indices donde hay valles
+    public structureArrays: number[][]; //contiene 4 listas donde estan clasificadas las estructuras individualmente por indice
 
 
-    public constructor(pWavAudio: any){
+    public constructor(pWavAudio: any, pOffset: number, pAnalysisLength: number){
         this.songStruct = [];
-        this.rises = [];
-        this.falls = [];
-        this.plateaus = [];
-        this.valleys = [];
+        this.structureArrays = [[],[],[],[]];
         this.audioData = pWavAudio;
         this.unifiedChannel = [];
 
-        this.structureSong();
-        this.dominantStruct = this.findDominantStructure();
-        console.log("dominante "+this.dominantStruct);
-        
+        this.structureSong(pOffset, pAnalysisLength);
     }
 
-    private structureSong(){
-        this.unifiedChannel.push(Math.abs((this.audioData.channelData[LEFT_CH][0] * this.audioData.channelData[RIGHT_CH][0])));
+    private structureSong(offset: number, analysisLength: number){
+
+        var songIndex = 0;
         var structIndex = 0;
-        for(let songIndex = 1; songIndex<this.audioData.length; songIndex++ ){
-            const unifiedSample = Math.abs((this.audioData.channelData[0][songIndex] * this.audioData.channelData[1][songIndex]));
+        var counter = 0;
+
+        this.unifiedChannel.push(Math.abs((this.audioData.channelData[LEFT_CH][songIndex+offset] * this.audioData.channelData[RIGHT_CH][songIndex+offset])));
+        
+        songIndex++;
+        
+        
+        for(songIndex; songIndex<analysisLength; songIndex++ ){
+            const unifiedSample = Math.abs((this.audioData.channelData[LEFT_CH][songIndex+offset] * this.audioData.channelData[RIGHT_CH][songIndex+offset]));
             this.unifiedChannel.push(unifiedSample);
-            if(songIndex%3 == 0){
-                const tmpStruct = this.createStructure(this.unifiedChannel[songIndex-3], this.unifiedChannel[songIndex]);
-                this.songStruct.push([tmpStruct, songIndex-3]);
+            counter++;
+            if(counter == 3){
+                const changeRate = this.calculateChangeRate(this.unifiedChannel[songIndex-3], this.unifiedChannel[songIndex]);
+                const tmpStruct = this.createStructure(changeRate, this.unifiedChannel[songIndex-3]);
+                
+                this.songStruct.push([tmpStruct, changeRate, (offset+songIndex-3)]);
                 this.allocateStructure(tmpStruct, structIndex);
                 structIndex++;
+                counter = 0;
             }
         }
-       /* console.log("song unified");
-        console.log(this.unifiedChannel.length);
-        for(var i=44100; i<44130; i++) {
-            console.log(this.unifiedChannel[i]);
-            console.log('*******************');
-          }*/
-        console.log(this.plateaus.length);
-        console.log(this.falls.length);
-        console.log(this.rises.length);
-        console.log(this.valleys.length);
-        for(let i = 0; i<300; i++){
-            console.log(this.songStruct[i][0]);
-        }
+       
     }
 
-    private createStructure(pFirstSample: number, pSecondSample: number): number {
+    private calculateChangeRate(pFirstSample: number, pSecondSample: number): number {
         const changeRate = pSecondSample - pFirstSample;
-        if(Math.abs(changeRate) < 0.0075){
+        return changeRate;
+    }
+
+    private createStructure(pChangeRate: number, pFirstSample: number): number {
+        if(Math.abs(pChangeRate) < 0.0075){
             if(pFirstSample < 0.03){
                 return VALLEY;
             } else {
                 return PLATEAU;
             }
         } else {
-            if(changeRate < 0){
+            if(pChangeRate < 0){
                 return FALL;
             } else {
                 return RISE;
@@ -80,37 +74,30 @@ export class SongStructure{
     }
 
     private allocateStructure(pStructure: number, pStructIndex: number){
-        switch(pStructure){
-            case VALLEY:
-                this.valleys.push(pStructIndex);
-                break;
-
-            case PLATEAU:
-                this.plateaus.push(pStructIndex);
-                break;
-
-            case RISE:
-                this.rises.push(pStructIndex);
-                break;
-
-            case FALL:
-                this.falls.push(pStructIndex);
-                break;
-        }
+        this.structureArrays[pStructure].push(pStructIndex);
     }
 
     private findDominantStructure(): number{
         var dominantStruct = RISE;
         var dominantLength = 0;
-        const structArray = [this.rises, this.falls, this.plateaus, this.valleys];
+        
 
-        for(let index = RISE; index<structArray.length; index++){
-            const tmpStructLength = structArray[index].length;
+        for(let index = 0; index<this.structureArrays.length; index++){
+            const tmpStructLength = this.structureArrays[index].length;
             if(tmpStructLength > dominantLength){
                 dominantLength = tmpStructLength;
                 dominantStruct = index;
             }
         }
         return dominantStruct;
+    }
+
+    public calculateDistribution(): number[]{
+        var distribution: number[] = [];
+        for(let structArrIndex = RISE; structArrIndex<=VALLEY; structArrIndex++){
+            distribution.push(this.structureArrays[structArrIndex].length/this.songStruct.length);
+        }
+
+        return distribution;
     }
 }
