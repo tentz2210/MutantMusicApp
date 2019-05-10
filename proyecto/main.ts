@@ -1,39 +1,44 @@
 /**
- * Filename: main.ts
- * Author: rnunez
- * Date: 03/21/2019
- * Description: main program file
+ * Hans Fernandez Murillo
+ * 2016193340
  */
 
-import {MidiPlayer} from './midi-player';
+import * as fs from 'fs';
+import * as WavDecoder from 'wav-decoder';
+import { MutantMusic } from './MutantMusicApp';
 
-const SONG_DURATION = 2 *  60 * 1000; // 2 minutes song milisegundos
-const minNoteDuration = 200;
-const noteDuration = 1200; // 1.2 seconds note
-const song : number[][] = []; // [[midiNote, duration, timeline]]
-const minNote = 20;
-const maxNote = 120;
-const NOTES_PER_SECOND = 5;
-const AMOUNT_OF_NOTES = SONG_DURATION / 1000 * NOTES_PER_SECOND;
 
-const playSong = new Promise<number[][]>((resolve, reject) => {
-  for (let i = 0; i < AMOUNT_OF_NOTES; i++) { // intentando que el random me lleve a 3 notas overlap en los mismos 2 segundos
-    song.push([
-      Math.floor(Math.random() * (maxNote - minNote) + minNote), // note
-      Math.floor(Math.random() * (noteDuration - minNoteDuration) + minNoteDuration), // note duration
-      Math.random() * SONG_DURATION]); // timeline
-  }
-  if (song.length === AMOUNT_OF_NOTES) {
-    resolve(song);
-  } else {
-    reject(song);
-  }
-})
-.then((song: number[][]) => {
-  const player = new MidiPlayer(song);
-  player.buildMidiFile();
-})
-.catch(((song: number[][]) => {
-  console.log("no se genero bien la cancion");
-}))
+const readFile = (filepath: string) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filepath, (err, buffer) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(buffer);
+    });
+  });
+};
 
+//funcion utilizada para leer los archivos de audio en el sistema
+async function readWav(filepathS1: string, filepathS2: string){
+  const bufferS1 = await readFile(filepathS1);
+  const audioDataS1 = await WavDecoder.decode(bufferS1);
+
+  const bufferS2 = await readFile(filepathS2);
+  const audioDataS2 = await WavDecoder.decode(bufferS2);
+  return [audioDataS1, audioDataS2];
+}
+
+
+
+const filepathS1 = "C:\\Users\\tentz\\Desktop\\proyecto\\Lavender Buds.wav";
+const filepathS2 = "C:\\Users\\tentz\\Desktop\\proyecto\\Lavender Buds_normal_sample.wav";
+
+//main start
+readWav(filepathS1, filepathS2).then((audioDataArray) => {
+
+  const test = new MutantMusic(audioDataArray[0], audioDataArray[1]);
+
+  test.matchOperation();
+
+});

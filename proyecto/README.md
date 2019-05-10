@@ -1,2 +1,2 @@
-# alg2019
-Some examples for algorithms course
+# Proyecto algoritmos
+Hans Fernandez M
